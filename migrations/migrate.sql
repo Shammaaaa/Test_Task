@@ -9,6 +9,6 @@ CREATE TABLE notes (
                        id SERIAL PRIMARY KEY,
                        user_id INTEGER NOT NULL,
                        title TEXT NOT NULL,
-                       body TEXT NOT NULL,
-                       FOREIGN KEY (user_id) REFERENCES users(id)
+                       body TEXT,
+                       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

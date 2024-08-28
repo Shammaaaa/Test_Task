@@ -30,6 +30,13 @@ func (h *HandlerImpl) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	tokenStr := r.Header.Get("Authorization")
+	claims, err := auth.ParseToken(tokenStr)
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+	note.UserID = int64(claims.UserID)
 
 	titleSuggestions, err := speller.CheckSpelling(note.Title)
 	if err != nil {

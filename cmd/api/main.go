@@ -2,22 +2,24 @@ package main
 
 import (
 	"context"
-	"github.com/go-chi/chi"
-	http5 "github.com/shamil/Test_task/internal/infrastructure/http"
-	"github.com/shamil/Test_task/internal/infrastructure/usecase/api"
-	"github.com/shamil/Test_task/internal/repository"
 	"net/http"
-
 	"os"
 
+	"github.com/go-chi/chi"
 	"github.com/urfave/cli/v2"
 
 	"github.com/shamil/Test_task/config"
+	http5 "github.com/shamil/Test_task/internal/infrastructure/http"
+	"github.com/shamil/Test_task/internal/infrastructure/usecase/api"
+	"github.com/shamil/Test_task/internal/infrastructure/usecase/updater"
+	"github.com/shamil/Test_task/internal/repository"
 	"github.com/shamil/Test_task/internal/service"
 	"github.com/shamil/Test_task/pkg/log"
 )
 
 func main() {
+
+	// --config-file ./config.yml --listener 1
 	application := cli.App{
 		Name: "Api-Service",
 		Flags: []cli.Flag{
@@ -90,10 +92,22 @@ func Main(ctx *cli.Context) error {
 	}()
 
 	repo := repository.New(apis.Pool.Builder())
+	useCase := updater.NewUpdaterUseCase(repo)
+
+	go func() {
+		useCase.Work(apis.Context())
+	}()
+
 	usecase := api.NewApiUseCase(repo)
 	handler := http5.New(usecase)
 	r := chi.NewRouter()
 	handler.MountRoutes(r)
-	http.ListenAndServe(":3004", r)
+	r.Get("/alive", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Alive"))
+	})
+	if err := http.ListenAndServe(":3004", r); err != nil {
+		log.Warningf("Failed to start server: %v", err)
 
+	}
+	return nil
 }

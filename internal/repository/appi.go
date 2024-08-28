@@ -8,20 +8,19 @@ import (
 
 func (r *Repository) Create(ctx context.Context, note domain.Note) (int64, error) {
 	query := `INSERT INTO notes (user_id, title, body) 
-	VALUES ($1, $2, $3)`
+	VALUES ($1, $2, $3) RETURNING id`
 
-	result, err := r.db.ExecContext(ctx, query,
-		note.UserID, note.Title, note.Body)
+	var id int64
+	err := r.db.QueryRowContext(ctx, query, note.UserID, note.Title, note.Body).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
+	return id, nil
 
-	id, err := result.LastInsertId()
-	return id, err
 }
 
 func (r *Repository) GetByUser(ctx context.Context, userID int) ([]domain.Note, error) {
-	query := `SELECT id, title, body 
+	query := `SELECT id, user_id, title, body 
 	FROM notes 
 	WHERE user_id = $1`
 
@@ -34,7 +33,7 @@ func (r *Repository) GetByUser(ctx context.Context, userID int) ([]domain.Note, 
 	var notes []domain.Note
 	for rows.Next() {
 		var note domain.Note
-		if err := rows.Scan(&note.ID, &note.Title, &note.Body); err != nil {
+		if err := rows.Scan(&note.ID, &note.UserID, &note.Title, &note.Body); err != nil {
 			return nil, err
 		}
 		notes = append(notes, note)

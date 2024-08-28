@@ -1,10 +1,10 @@
 server:
   database:
-    host: 00.000.00.247
-    port: 5433
+    host: localhost
+    port: 5432
     user: user
     password: pass
-    name: order
+    name: Note
     dialect: postgres
     debug: true
     max_open_conns: 20
